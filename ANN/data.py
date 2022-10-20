@@ -16,9 +16,20 @@ def readDataLabels():
 
 
 def to_categorical(y):
+    """Simply translates the inputs to integer representation of
+    the number. This will also act as a way to reference the list
+    of output neurons where the index cooresponding to a given digit
+    will be the output for that digit.
+
+    Args:
+        y (np.ndarray): An array of numeric digits held as a number or a string
+
+    Returns:
+        (np.ndarray): All of the categories changed to a single digit.
+    """
 
     # Convert the nominal y values tocategorical
-
+    y = y.astype(int)
     return y
 
 

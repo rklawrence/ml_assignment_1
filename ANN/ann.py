@@ -6,7 +6,7 @@ import math
 import random
 
 from data import readDataLabels, normalize_data, train_test_split, to_categorical
-from utils import accuracy_score, CrossEntropyLoss, ReLUActivation, SoftmaxActivation
+from utils import accuracy_score, CrossEntropyLoss, ReLUActivation, SoftmaxActivation, SigmoidActivation
 
 # Create an MLP with 8 neurons
 # Input -> Hidden Layer -> Output Layer -> Output
@@ -48,19 +48,19 @@ class ANN:
         )
         return
 
-    def forward(self, x):      # TODO
+    def forward(self, x) -> np.ndarray:
         """ Takes in an input, runs it through the model and returns the output layer
 
         Args:
             x (np.ndarray): The input data, it should be a [1 x num_input_features]
             sized matrix
+        Return:
+            (np.ndarray):
+                The output of the ANN
         """
         hidden_layer = np.matmul(x, self.input_to_hidden_weights)
-        # TODO: Apply activation function to hidden_layer
-
+        hidden_layer = self.hidden_unit_activation(hidden_layer)
         output_layer = np.matmul(hidden_layer, self.hidden_to_output_weights)
-        print(output_layer)
-        # TODO: Apply activation function to output_layer
         output = self.output_activation(output_layer)
         return output
 
@@ -87,7 +87,7 @@ def main(argv):
         num_input_features=64,
         num_hidden_units=16,
         num_outputs=10,
-        hidden_unit_activation=ReLUActivation(),
+        hidden_unit_activation=SigmoidActivation(),
         output_activation=SoftmaxActivation(),
         loss_function=CrossEntropyLoss()
     )
@@ -95,7 +95,7 @@ def main(argv):
     # Load dataset
     dataset = readDataLabels()      # dataset[0] = X, dataset[1] = y
     normalized_data = normalize_data(dataset[0])
-    categorized_labels = dataset[1]
+    categorized_labels = to_categorical(dataset[1])
     dataset = (normalized_data, categorized_labels)
 
     # Split data into train and test split. call function in data.py
@@ -104,8 +104,14 @@ def main(argv):
     # print(len(test_data[0]))
     normalize_data(training_data[0])
 
-    test_data = training_data[0][1]
-    print(ann.forward(test_data))
+    test_data = training_data[0][0]
+    y_pred = ann.forward(test_data)
+    print(y_pred)
+    y_gt = np.zeros(10)
+    y_gt[training_data[1][0]] = 1
+    print(y_gt)
+    loss_function = CrossEntropyLoss()
+    print(loss_function(y_pred=y_pred, y_gt=y_gt))
 
     # call ann->train()... Once trained, try to store the model to avoid re-training everytime
     if mode == 'train':

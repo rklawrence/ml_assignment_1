@@ -37,8 +37,10 @@ class CrossEntropyLoss:     # TODO: Make this work!!!
         pass
 
     def __call__(self, y_pred, y_gt):
-        # TODO: Calculate Loss Function
-        loss = None
+        loss = 0
+        for i in range(len(y_pred)):
+            loss += y_gt[i] * math.log(y_pred[i])
+        loss *= -1
         return loss
 
     def grad(self):
@@ -55,16 +57,24 @@ class SoftmaxActivation:    # TODO: Make this work!!!
     def __init__(self):
         self.z = None
 
-    def __call__(self, y):
+    def __call__(self, y) -> np.ndarray:
         """Applies the Softmax activation function to the output
         layer of the ANN.
 
         Args:
             y (np.ndarray): The output layer of the ANN.
+
+        Returns:
+            (np.ndarray):
+                The results of the softmax function on the input array.
         """
-        highest_index = np.argmax(y)
-        self.z = highest_index
-        return highest_index
+        exponent_sum = 0
+        for number in y:
+            exponent_sum += math.exp(number)
+        results = list()
+        for number in y:
+            results.append(math.exp(number)/exponent_sum)
+        return np.array(results)
 
     def __grad__(self):
         # TODO: Calculate Gradients.. Remember this is calculated w.r.t. input to the function -> dy/dz
@@ -75,9 +85,21 @@ class SigmoidActivation:    # TODO: Make this work!!!
     def __init__(self):
         pass
 
-    def __call__(self, y):
-        # TODO: Calculate Activation Function
-        pass
+    def __call__(self, y: np.ndarray) -> np.ndarray:
+        """Applies the sigmoid activation function to the input array.
+
+        Args:
+            y (np.ndarray): The 1xN array that acts as the input for
+            the activation function.
+
+        Returns:
+            np.ndarray: The 1xN array that has had the activation 
+            function applied to it.
+        """
+        results = list()
+        for number in y:
+            results.append(math.exp(number) / (1 + math.exp(number)))
+        return np.array(results)
 
     def __grad__(self):
         # TODO: Calculate Gradients.. Remember this is calculated w.r.t. input to the function -> dy/dz
