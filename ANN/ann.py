@@ -58,25 +58,71 @@ class ANN:
             (np.ndarray):
                 The output of the ANN
         """
+        self.inputs = x
         hidden_layer = np.matmul(x, self.input_to_hidden_weights)
         hidden_layer = self.hidden_unit_activation(hidden_layer)
+        self.hidden_values = hidden_layer
         output_layer = np.matmul(hidden_layer, self.hidden_to_output_weights)
         output = self.output_activation(output_layer)
+        self.outputs = output
+        # self.loss =
         return output
 
-    def backward(self):     # TODO
-        pass
+    def backward(self, learning_rate: int):
+        # Update the hidden to output weights
+        gradient = self.output_activation.__grad__()
+        # print(gradient)
+        height, width = self.hidden_to_output_weights.shape
+        for i in range(height):
+            for j in range(width):
+                value = self.hidden_to_output_weights[i, j]
+                self.hidden_to_output_weights[i, j] = (
+                    value - (learning_rate * gradient[j])
+                )
+        # Update the input to hidden weights
+        gradient = self.hidden_unit_activation.__grad__()
+        # for i, value in enumerate(gradient):
+        #     gradient[i] += np.sum(self.output_activation.__grad__())
+        height, width = self.input_to_hidden_weights.shape
+        # print(self.input_to_hidden_weights.shape)
+        for i in range(height):
+            for j in range(width):
+                value = self.input_to_hidden_weights[i, j]
+                # print(value)
+                self.input_to_hidden_weights[i, j] = (
+                    value - (learning_rate *
+                             gradient[j])
+                )
 
     def update_params(self):    # TODO
         # Take the optimization step.
         return
 
-    def train(self, dataset, learning_rate=0.01, num_epochs=100):
+    def train(self, dataset, learning_rate=.0001, num_epochs=40):
         for epoch in range(num_epochs):
-            pass
+            average_loss = 0
+            for i in range(len(dataset[0])):
+                image = dataset[0][i]
+                label = dataset[1][i]
+                output = self.forward(image)
+                y_gt = np.zeros(len(output))
+                y_gt[label] = 1
+                self.loss = self.loss_function(y_pred=output, y_gt=y_gt)
+                average_loss += self.loss
+                self.backward(learning_rate)
+            average_loss = average_loss / len(dataset[0])
+            print(f"Epoch {epoch} Average Loss: {average_loss}")
+            print(f"Accuracy: {self.test(dataset)}")
+        return
 
     def test(self, test_dataset):
-        accuracy = 0    # Test accuracy
+        correct = 0
+        for i in range(len(test_dataset[0])):
+            output = self.forward(test_dataset[0][i])
+            y_true = np.argmax(output)
+            if y_true == test_dataset[1][i]:
+                correct += 1
+        accuracy = correct / len(test_dataset[0])
         # Get predictions from test dataset
         # Calculate the prediction accuracy, see utils.py
         return accuracy
@@ -95,6 +141,7 @@ def main(argv):
     # Load dataset
     dataset = readDataLabels()      # dataset[0] = X, dataset[1] = y
     normalized_data = normalize_data(dataset[0])
+
     categorized_labels = to_categorical(dataset[1])
     dataset = (normalized_data, categorized_labels)
 
@@ -104,18 +151,10 @@ def main(argv):
     # print(len(test_data[0]))
     normalize_data(training_data[0])
 
-    test_data = training_data[0][0]
-    y_pred = ann.forward(test_data)
-    print(y_pred)
-    y_gt = np.zeros(10)
-    y_gt[training_data[1][0]] = 1
-    print(y_gt)
-    loss_function = CrossEntropyLoss()
-    print(loss_function(y_pred=y_pred, y_gt=y_gt))
-
     # call ann->train()... Once trained, try to store the model to avoid re-training everytime
     if mode == 'train':
-        pass        # Call ann training code here
+        ann.train(dataset=dataset, num_epochs=100)
+        print(ann.test(test_dataset=test_data))
     else:
         # Call loading of trained model here, if using this mode (Not required, provided for convenience)
         raise NotImplementedError

@@ -53,7 +53,7 @@ def normalize_data(data) -> list:  # TODO
     pixel to be in the range [0, 1] instead of the range [0, 255]
     """
     results = list()
-    max_value = 255
+    max_value = 16
     min_value = 0
     for image in data:
         for i in range(len(image)):

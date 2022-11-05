@@ -37,15 +37,19 @@ class CrossEntropyLoss:     # TODO: Make this work!!!
         pass
 
     def __call__(self, y_pred, y_gt):
+        self.current_prediction = y_pred
+        self.current_gt = y_gt
         loss = 0
         for i in range(len(y_pred)):
             loss += y_gt[i] * math.log(y_pred[i])
-        loss *= -1
+        loss *= -1/len(y_pred)
         return loss
 
     def grad(self):
-        # TODO: Calculate Gradients for back propagation
-        gradient = None
+        y_pred = self.current_prediction
+        y_gt = self.current_gt
+        y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
+        gradient = - (y_gt / y_pred) + (1 - y_gt) / (1 - y_pred)
         return gradient
 
 
@@ -74,16 +78,48 @@ class SoftmaxActivation:    # TODO: Make this work!!!
         results = list()
         for number in y:
             results.append(math.exp(number)/exponent_sum)
-        return np.array(results)
+        self.z = np.array(results)
+        return self.z
 
     def __grad__(self):
-        # TODO: Calculate Gradients.. Remember this is calculated w.r.t. input to the function -> dy/dz
-        pass
+        # num_outputs = len(self.z)
+        max_x = np.amax(self.z)
+        shifted_sum = 0
+        for i in range(len(self.z)):
+            shifted_sum += math.exp(self.z[i] - max_x)
+        results = list()
+        for i in range(len(self.z)):
+            results.append(math.exp(self.z[i] - max_x) / shifted_sum)
+        # for i in range(len(self.z))
+        #     for j in range(len(self.z))
+        # partial_derivatives = np.ndarray(
+        #     (num_outputs, num_outputs), dtype=float)
+        # for i in range(num_outputs):
+        #     for j in range(num_outputs):
+        #         if i == j:
+        #             partial_derivatives[i, j] = self.z[i] * (1 - self.z[j])
+        #         else:
+        #             partial_derivatives[i, j] = -self.z[i] * self.z[j]
+        # return np.sum(partial_derivatives, axis=0)
+        return np.array(results)
 
 
 class SigmoidActivation:    # TODO: Make this work!!!
     def __init__(self):
+        self.y = None
         pass
+
+    @staticmethod
+    def sigmoid(x: float) -> float:
+        """Calculates the sigmoid of a given value
+
+        Args:
+            x (float): The input for the sigmoid function
+
+        Returns:
+            float: The output of the sigmoid function.
+        """
+        return math.exp(x) / (1 + math.exp(x))
 
     def __call__(self, y: np.ndarray) -> np.ndarray:
         """Applies the sigmoid activation function to the input array.
@@ -96,14 +132,19 @@ class SigmoidActivation:    # TODO: Make this work!!!
             np.ndarray: The 1xN array that has had the activation 
             function applied to it.
         """
+        self.y = y
         results = list()
         for number in y:
-            results.append(math.exp(number) / (1 + math.exp(number)))
-        return np.array(results)
+            self.sigmoid(number)
+            results.append(self.sigmoid(number))
+        self.z = np.array(results)
+        return self.z
 
     def __grad__(self):
-        # TODO: Calculate Gradients.. Remember this is calculated w.r.t. input to the function -> dy/dz
-        pass
+        gradient = np.zeros(len(self.y))
+        for i, number in enumerate(self.y):
+            gradient[i] = self.sigmoid(number) * (1 - self.sigmoid(number))
+        return gradient
 
 
 class ReLUActivation:
